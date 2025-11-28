@@ -158,6 +158,14 @@ input[type="text"] {
     font-weight: bold;
 }
 
+/* Fix dla suwaka na mobile */
+.prop-row input[type="range"] {
+    flex: 1;
+    margin-left: 10px;
+    width: 100%;
+    min-width: 0; /* Pozwala na ściskanie w Flexboxie */
+}
+
 /* Przyciski w panelu właściwości */
 #propertiesPanel button {
     width: 100%;

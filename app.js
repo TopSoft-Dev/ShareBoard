@@ -2157,8 +2157,8 @@ drawContext.addEventListener('wheel', (e) => {
     let currentVal = parseInt(sizePicker.value);
     let newVal = currentVal + direction;
 
-    // Clamp (1-50)
-    newVal = Math.min(Math.max(newVal, 1), 50);
+    // Clamp (1-150)
+    newVal = Math.min(Math.max(newVal, 1), 150);
     sizePicker.value = newVal;
 
     // Aktualizuj kursor wizualnie od razu
