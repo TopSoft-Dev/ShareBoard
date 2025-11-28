@@ -1,0 +1,277 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Zapobiega przewijaniu strony */
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+    box-sizing: border-box;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+#app {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+canvas {
+    display: block;
+    background-color: #ffffff;
+    touch-action: none; /* KLUCZOWE: Wyłącza przewijanie na dotyku, umożliwia rysowanie */
+    cursor: grab;
+}
+
+.toolbar {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px 20px;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    z-index: 100;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 90%;
+    max-width: 500px;
+}
+
+.tool-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+button {
+    padding: 8px 15px;
+    border: none;
+    background: #eee;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+button:hover {
+    background: #ddd;
+}
+
+button.active {
+    background: #007bff;
+    color: white;
+}
+
+#objectsPanel {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 150;
+    min-width: 200px;
+}
+
+#objectsPanel h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    text-align: center;
+}
+
+#objectsPanel button {
+    width: 100%;
+    text-align: left;
+}
+
+#textInputModal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    display: flex;
+    gap: 10px;
+    z-index: 200;
+}
+
+.hidden {
+    display: none !important;
+}
+
+input[type="text"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Panel Właściwości (Prawy Górny Róg) */
+#propertiesPanel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 220px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    z-index: 150;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#propertiesPanel h4 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    color: #555;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.prop-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.prop-row label {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Przyciski w panelu właściwości */
+#propertiesPanel button {
+    width: 100%;
+    margin-bottom: 5px;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    text-align: center;
+}
+
+.danger-btn {
+    background-color: #ffebee !important;
+    color: #d32f2f !important;
+    border: 1px solid #ffcdd2 !important;
+}
+.danger-btn:hover {
+    background-color: #ffcdd2 !important;
+}
+
+.warn-btn {
+    background-color: #fff3e0 !important;
+    color: #ef6c00 !important;
+    border: 1px solid #ffe0b2 !important;
+}
+.warn-btn:hover {
+    background-color: #ffe0b2 !important;
+}
+
+/* Mobile Optimization */
+@media (max-width: 600px) {
+    .toolbar {
+        bottom: 10px;
+        padding: 8px 10px;
+        width: 95%;
+        border-radius: 15px;
+    }
+    
+    .tool-group {
+        gap: 5px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .toolbar button {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    #propertiesPanel {
+        top: 10px;
+        right: 10px;
+        width: 180px;
+    }
+}
+
+/* Custom Brush Cursor */
+#brushCursor {
+    position: fixed;
+    border: 1px solid #777;
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.1); /* Lekki podgląd */
+}
+
+/* Floating Text Editor */
+#textEditorOverlay {
+    position: absolute;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    z-index: 500; /* Nad wszystkim */
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    /* Pozycja startowa, będzie nadpisywana przez JS */
+    top: 50%;
+    left: 50%;
+}
+
+.editor-controls {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.editor-controls button {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.editor-controls button.active {
+    background: #e3f2fd;
+    border-color: #2196f3;
+}
+
+.editor-controls input[type="number"] {
+    width: 50px;
+    padding: 4px;
+}
+
+#editTextInput {
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 8px;
+    resize: vertical;
+    font-family: Arial, sans-serif; /* Zgodne z canvasem */
+}
+

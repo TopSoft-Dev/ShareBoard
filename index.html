@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ShareBoard - Rysuj z przyjaciółmi</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="app">
+        <canvas id="board"></canvas>
+        
+        <!-- Custom Brush Cursor -->
+        <div id="brushCursor" class="hidden"></div>
+
+        <!-- Panel Właściwości (Prawy Górny Róg) -->
+        <div id="propertiesPanel" class="hidden">
+            <!-- Kontekst: Rysowanie -->
+            <div id="drawContext" class="hidden">
+                <h4>Opcje pędzla</h4>
+                <button id="btnLine">📏 Linia</button>
+                <button id="btnEraser">🧹 Gumka</button>
+                <div class="prop-row">
+                    <label>Kolor:</label>
+                    <input type="color" id="colorPicker" value="#000000">
+                </div>
+                <div class="prop-row">
+                    <label>Grubość:</label>
+                    <input type="range" id="sizePicker" min="1" max="50" value="3">
+                </div>
+            </div>
+
+            <!-- Kontekst: Tekst -->
+            <div id="textContext" class="hidden">
+                <h4>Opcje tekstu</h4>
+                <button id="btnEditText">✏️ Edytuj treść</button>
+                <div class="prop-row">
+                    <label>Rozmiar:</label>
+                    <input type="number" id="fontSizeInput" min="8" max="72" value="16" style="width: 60px;">
+                </div>
+            </div>
+
+            <!-- Kontekst: Sinusoida -->
+            <div id="sineContext" class="hidden">
+                <h4>Opcje wykresu</h4>
+                <div class="prop-row">
+                    <label>Oś Y:</label>
+                    <input type="text" id="sineLabelY" value="Y" style="width: 80px;">
+                </div>
+                <div class="prop-row">
+                    <label>Oś X:</label>
+                    <input type="text" id="sineLabelX" value="X" style="width: 80px;">
+                </div>
+                <button id="btnDeleteSine" class="danger-btn">🗑️ Usuń wykres</button>
+            </div>
+
+            <!-- Kontekst: Trójkąt Zależności -->
+            <div id="triangleContext" class="hidden">
+                <h4>Trójkąt Zależności</h4>
+                <div class="prop-row">
+                    <label>Góra:</label>
+                    <input type="text" id="triLabel1" value="Szybko" style="width: 100px;">
+                </div>
+                <div class="prop-row">
+                    <label>Lewy:</label>
+                    <input type="text" id="triLabel2" value="Tanio" style="width: 100px;">
+                </div>
+                <div class="prop-row">
+                    <label>Prawy:</label>
+                    <input type="text" id="triLabel3" value="Jakość" style="width: 100px;">
+                </div>
+                <button id="btnDeleteTriangleConnections" class="danger-btn" style="margin-top: 5px;">🔗 Usuń łączenia</button>
+                <button id="btnDeleteTriangle" class="danger-btn">🗑️ Usuń trójkąt</button>
+            </div>
+
+            <!-- Kontekst: Timer -->
+            <div id="timerContext" class="hidden">
+                <h4>Minutnik</h4>
+                <div class="prop-row">
+                    <label>Czas (min):</label>
+                    <input type="number" id="timerDuration" min="1" max="60" value="5" style="width: 60px;">
+                </div>
+                <button id="btnTimerStart" class="active-btn">▶ Start</button>
+                <button id="btnTimerReset" class="warn-btn">↺ Reset</button>
+                <button id="btnDeleteTimer" class="danger-btn" style="margin-top: 5px;">🗑️ Usuń</button>
+            </div>
+
+            <!-- Kontekst: Kostka -->
+            <div id="diceContext" class="hidden">
+                <h4>Kostka</h4>
+                <div class="prop-row">
+                    <label>Min:</label>
+                    <input type="number" id="diceMin" value="1" style="width: 50px;">
+                </div>
+                <div class="prop-row">
+                    <label>Max:</label>
+                    <input type="number" id="diceMax" value="6" style="width: 50px;">
+                </div>
+                <button id="btnDeleteDice" class="danger-btn">🗑️ Usuń</button>
+            </div>
+
+            <!-- Kontekst: Checklista -->
+            <div id="checklistContext" class="hidden">
+                <h4>Lista Zadań</h4>
+                <div class="prop-row">
+                    <label>Nowy:</label>
+                    <input type="text" id="checklistNewItem" placeholder="Zadanie..." style="width: 100px;">
+                    <button id="btnAddChecklistItem" style="width: 30px;">+</button>
+                </div>
+                <button id="btnDeleteChecklist" class="danger-btn">🗑️ Usuń</button>
+            </div>
+
+            <!-- Kontekst: Venn -->
+            <div id="vennContext" class="hidden">
+                <h4>Diagram Venna</h4>
+                <div class="prop-row"><label>Koło 1:</label><input type="text" id="vennLabel1" style="width: 100px;"></div>
+                <div class="prop-row"><label>Koło 2:</label><input type="text" id="vennLabel2" style="width: 100px;"></div>
+                <div class="prop-row"><label>Koło 3:</label><input type="text" id="vennLabel3" style="width: 100px;"></div>
+                <button id="btnDeleteVenn" class="danger-btn">🗑️ Usuń</button>
+            </div>
+
+            <!-- Kontekst: Macierz -->
+            <div id="matrixContext" class="hidden">
+                <h4>Macierz</h4>
+                <div class="prop-row"><label>Q1:</label><input type="text" id="matrixLabel1" style="width: 100px;"></div>
+                <div class="prop-row"><label>Q2:</label><input type="text" id="matrixLabel2" style="width: 100px;"></div>
+                <div class="prop-row"><label>Q3:</label><input type="text" id="matrixLabel3" style="width: 100px;"></div>
+                <div class="prop-row"><label>Q4:</label><input type="text" id="matrixLabel4" style="width: 100px;"></div>
+                <button id="btnDeleteMatrix" class="danger-btn">🗑️ Usuń</button>
+            </div>
+
+            <!-- Kontekst: Blok -->
+            <div id="blockContext" class="hidden">
+                <h4>Wybrany obiekt</h4>
+                <button id="btnDeleteObject" class="danger-btn">🗑️ Usuń obiekt</button>
+                <button id="btnDeleteConnections" class="warn-btn">🔌 Usuń tylko łączenia</button>
+            </div>
+
+            <!-- Kontekst: Połączenie -->
+            <div id="connectionContext" class="hidden">
+                <h4>Wybrane połączenie</h4>
+                <button id="btnDeleteConn" class="danger-btn">❌ Usuń połączenie</button>
+            </div>
+        </div>
+        
+        <div class="toolbar">
+            <div class="tool-group">
+                <button id="btnSelect">🖱️ Przesuń</button>
+                <!-- btnPan removed -->
+                <button id="btnDraw">✏️ Rysuj</button>
+                <button id="btnObjects">📦 Obiekty</button>
+                <button id="btnClear">🗑️ Czyść</button>
+            </div>
+        </div>
+
+        <!-- Panel Obiektów -->
+        <div id="objectsPanel" class="hidden">
+            <h3>Wstaw Obiekt</h3>
+            <button id="btnAddBlock">⬜ Blok</button>
+            <button id="btnAddSine">〰️ Sinus</button>
+            <button id="btnAddTriangle">🔺 Trójkąt</button>
+            <div class="divider"></div>
+            <button id="btnAddDice">🎲 Kostka</button>
+            <button id="btnAddTimer">⏱️ Timer</button>
+            <button id="btnAddChecklist">✅ Lista</button>
+            <button id="btnAddVenn">🔵 Venn</button>
+            <button id="btnAddMatrix">田 Macierz</button>
+            <button id="btnAddText">📝 Tekst</button>
+        </div>
+
+        <!-- Pływający edytor tekstu (Photoshop style) -->
+        <div id="textEditorOverlay" class="hidden">
+            <div class="editor-controls">
+                <input type="number" id="editSize" min="8" max="100" value="16" title="Rozmiar">
+                <button id="btnBold" title="Pogrubienie"><b>B</b></button>
+                <button id="btnItalic" title="Kursywa"><i>I</i></button>
+            </div>
+            <textarea id="editTextInput" rows="2" placeholder="Wpisz tekst..."></textarea>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
