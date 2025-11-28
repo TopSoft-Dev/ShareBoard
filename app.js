@@ -2288,3 +2288,12 @@ onValue(ref(db, 'connections'), (snapshot) => {
         redrawBoard();
     }
 });
+
+// --- GLOBALNY LOOP DLA TIMERÓW ---
+// Odświeżaj tablicę co sekundę, jeśli są aktywne timery, aby zaktualizować odliczanie
+setInterval(() => {
+    const hasActiveTimers = Object.values(localData.blocks).some(b => b.isTimer && b.isRunning);
+    if (hasActiveTimers) {
+        redrawBoard();
+    }
+}, 1000);
