@@ -98,6 +98,7 @@ const btnItalic = document.getElementById('btnItalic');
 // Others
 const objectsPanel = document.getElementById('objectsPanel');
 const brushCursor = document.getElementById('brushCursor');
+const loadingOverlay = document.getElementById('loadingOverlay');
 const btnAddBlock = document.getElementById('btnAddBlock');
 const btnAddSine = document.getElementById('btnAddSine');
 const btnAddTriangle = document.getElementById('btnAddTriangle');
@@ -156,6 +157,21 @@ const localData = {
     blocks: {}, // { id: { x, y, w, h, text, color } }
     connections: {} // { id: { fromBlock, fromSide, toBlock, toSide } }
 };
+
+const initialLoadStatus = {
+    strokes: false,
+    notes: false,
+    blocks: false,
+    connections: false
+};
+
+function markSectionLoaded(section) {
+    if (initialLoadStatus[section]) return;
+    initialLoadStatus[section] = true;
+    if (Object.values(initialLoadStatus).every(Boolean)) {
+        loadingOverlay?.classList.add('hidden');
+    }
+}
 
 // Bufor dla rysunków (Warstwa kresek - pozwala na prawdziwe wymazywanie)
 const offscreenCanvas = document.createElement('canvas');
@@ -252,9 +268,27 @@ function redrawBoard() {
     Object.values(localData.strokes).forEach(stroke => {
         if (stroke.points.length === 0) return;
         
+        const firstPoint = stroke.points[0];
+        const isEraserStroke = stroke.color === '#ffffff';
+
+        if (stroke.points.length === 1) {
+            if (isEraserStroke) {
+                offCtx.globalCompositeOperation = 'destination-out';
+                offCtx.fillStyle = 'rgba(0,0,0,1)';
+            } else {
+                offCtx.globalCompositeOperation = 'source-over';
+                offCtx.fillStyle = stroke.color;
+            }
+
+            offCtx.beginPath();
+            offCtx.arc(firstPoint.x, firstPoint.y, stroke.width / 2, 0, Math.PI * 2);
+            offCtx.fill();
+            return;
+        }
+
         offCtx.beginPath();
         
-        if (stroke.color === '#ffffff') {
+        if (isEraserStroke) {
              // Gumka: usuwa piksele z warstwy rysunkowej
              offCtx.globalCompositeOperation = 'destination-out';
              offCtx.lineWidth = stroke.width;
@@ -2057,10 +2091,19 @@ setInterval(() => {
 }, 50);
 
 function sendBatch() {
-    if (pendingPoints.length === 0) return;
+    if (pendingPoints.length === 0 || !currentStrokeId) return;
+
+    const stroke = localData.strokes[currentStrokeId];
+    let pointsToSend = pendingPoints;
+
+    if (!isLineMode && stroke && stroke.points.length === 1 && pendingPoints.length === 1) {
+        const duplicatePoint = { ...pendingPoints[0] };
+        stroke.points.push(duplicatePoint);
+        pointsToSend = [...pendingPoints, duplicatePoint];
+    }
 
     const pointsRef = ref(db, `strokes/${currentStrokeId}/packets`);
-    push(pointsRef, pendingPoints);
+    push(pointsRef, pointsToSend);
     
     pendingPoints = [];
 }
@@ -2265,6 +2308,7 @@ onValue(ref(db, 'strokes'), (snapshot) => {
         localData.strokes = {};
         redrawBoard();
     }
+    markSectionLoaded('strokes');
 });
 
 onValue(ref(db, 'notes'), (snapshot) => {
@@ -2272,6 +2316,7 @@ onValue(ref(db, 'notes'), (snapshot) => {
         localData.notes = {};
         redrawBoard();
     }
+    markSectionLoaded('notes');
 });
 
 onValue(ref(db, 'blocks'), (snapshot) => {
@@ -2280,6 +2325,7 @@ onValue(ref(db, 'blocks'), (snapshot) => {
         selectedElement = null;
         redrawBoard();
     }
+    markSectionLoaded('blocks');
 });
 
 onValue(ref(db, 'connections'), (snapshot) => {
@@ -2287,6 +2333,7 @@ onValue(ref(db, 'connections'), (snapshot) => {
         localData.connections = {};
         redrawBoard();
     }
+    markSectionLoaded('connections');
 });
 
 // --- GLOBALNY LOOP DLA TIMERÓW ---
