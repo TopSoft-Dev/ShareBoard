@@ -158,6 +158,8 @@ const localData = {
     connections: {} // { id: { fromBlock, fromSide, toBlock, toSide } }
 };
 
+const strokeHistory = [];
+
 const initialLoadStatus = {
     strokes: false,
     notes: false,
@@ -324,7 +326,7 @@ function redrawBoard() {
     ctx.font = 'bold 16px Arial';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
-    ctx.fillText('v1.0.1', PAPER_W - 20, PAPER_H - 20);
+    ctx.fillText('v1.0.2', PAPER_W - 20, PAPER_H - 20);
 
     ctx.restore(); 
 }
@@ -1389,7 +1391,22 @@ triLabel3.addEventListener('input', (e) => {
     }
 });
 
-window.addEventListener('keydown', (e) => {
+setInterval(() => {
+    if (isDrawing && pendingPoints.length > 0 && currentStrokeId) {
+        sendBatch();
+    }
+}, 50);
+
+function undoLastStroke() {
+    if (strokeHistory.length === 0) return;
+    const lastStrokeId = strokeHistory.pop();
+    if (!lastStrokeId) return;
+    remove(ref(db, `strokes/${lastStrokeId}`));
+    delete localData.strokes[lastStrokeId];
+    redrawBoard();
+}
+
+document.addEventListener('keydown', (e) => {
     if (e.key === 'Delete') { // Tylko Delete kasuje
         // Sprawdź czy nie edytujemy tekstu (overlay musi być ukryty)
         if (textEditorOverlay.classList.contains('hidden') && selectedElement) {
@@ -1399,6 +1416,10 @@ window.addEventListener('keydown', (e) => {
                  deleteSelectedConnection();
              }
         }
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+        e.preventDefault();
+        undoLastStroke();
     }
 });
 
@@ -2124,6 +2145,9 @@ canvas.addEventListener('pointerup', (e) => {
             push(pointsRef, [strokeOrigin, lastPoint]);
         } else {
             sendBatch();
+        }
+        if (currentStrokeId) {
+            strokeHistory.push(currentStrokeId);
         }
         isDrawing = false;
         currentStrokeId = null;
