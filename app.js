@@ -319,6 +319,13 @@ function redrawBoard() {
         ctx.fillText(note.text, note.x, note.y);
     });
 
+    // Watermark
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('v1.0.1', PAPER_W - 20, PAPER_H - 20);
+
     ctx.restore(); 
 }
 
@@ -444,6 +451,7 @@ function drawBlock(ctx, block, isSelected) {
             }
 
             // Tekst
+            ctx.font = '14px Arial';
             ctx.fillStyle = item.checked ? '#888' : '#000';
             if (item.checked) {
                  // Przekreślenie ręczne (proste)
@@ -461,6 +469,7 @@ function drawBlock(ctx, block, isSelected) {
                 ctx.fillStyle = '#dc3545';
                 ctx.font = 'bold 14px Arial';
                 ctx.fillText("×", block.x + block.w - 20, boxY); // Po prawej
+                ctx.font = '14px Arial';
             }
 
             // Kropka łączenia (tylko wizualnie, logika później)
@@ -832,6 +841,14 @@ function getAnchorPos(block, side) {
         }
     }
 
+    if (block.isChecklist && typeof side === 'string' && side.startsWith('item_')) {
+        const index = parseInt(side.split('_')[1], 10);
+        const itemH = 30;
+        const baseY = block.y + 40;
+        const anchorY = baseY + index * itemH + 7;
+        return { x: block.x + block.w, y: anchorY };
+    }
+
     switch(side) {
         case 'top': return { x: block.x + block.w/2, y: block.y };
         case 'right': return { x: block.x + block.w, y: block.y + block.h/2 };
@@ -1023,7 +1040,20 @@ btnObjects.addEventListener('click', (e) => {
     }
 });
 
-// ... (rest of the code remains the same)
+btnAddBlock.addEventListener('click', () => {
+    const centerX = (canvas.width / 2 - camera.x) / scale;
+    const centerY = (canvas.height / 2 - camera.y) / scale;
+
+    push(ref(db, 'blocks'), {
+        x: centerX - 100,
+        y: centerY - 60,
+        w: 200,
+        h: 120,
+        text: "Nowy blok",
+        color: "#ffffff"
+    });
+    objectsPanel.classList.add('hidden');
+});
 
 btnAddSine.addEventListener('click', () => {
     const centerX = (canvas.width / 2 - camera.x) / scale;
@@ -1442,6 +1472,15 @@ function hitTest(x, y) {
                 // Checkbox (x + 15, y + 7, 14x14) - większy margines
                 if (dist(x, y, block.x + 15 + 7, currY + 7) < 15) return { type: 'chk_box', id: id, index: i };
                 
+                // Dynamiczna kotwica przy każdym zadaniu (priorytet nad przyciskiem X)
+                if ((selectedElement && selectedElement.id === id) || interactionMode === 'connecting') {
+                     const anchorX = block.x + block.w;
+                     const anchorY = currY + 7;
+                     if (dist(x, y, anchorX, anchorY) < 14) {
+                         return { type: 'anchor', blockId: id, side: `item_${i}` };
+                     }
+                }
+
                 // Delete (x + w - 20) - tylko gdy wybrany
                 if (selectedElement && selectedElement.id === id) {
                      if (dist(x, y, block.x + block.w - 20 + 7, currY + 7) < 15) return { type: 'chk_del', id: id, index: i };
@@ -1660,6 +1699,16 @@ canvas.addEventListener('dblclick', (e) => {
             const block = localData.blocks[hit.id];
             if (block.isText) {
                 openTextEditor(hit.id);
+            } else if (block.isChecklist) {
+                const headerBottom = block.y + 30; // obszar nagłówka (tytuł + linia)
+                if (y >= block.y && y <= headerBottom) {
+                    const newTitle = prompt("Nazwa listy:", block.title || "Lista Zadań");
+                    if (newTitle !== null) {
+                        const titleToSave = newTitle.trim() || "Lista Zadań";
+                        set(ref(db, `blocks/${hit.id}/title`), titleToSave);
+                    }
+                    return;
+                }
             } else {
                 const newText = prompt("Wpisz tekst:", block.text);
                 if (newText !== null) {
