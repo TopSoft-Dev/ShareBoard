@@ -2331,6 +2331,16 @@ onChildAdded(ref(db, 'strokes'), (snapshot) => {
     });
 });
 
+onChildRemoved(ref(db, 'strokes'), (snapshot) => {
+    const strokeId = snapshot.key;
+    delete localData.strokes[strokeId];
+    const idx = strokeHistory.lastIndexOf(strokeId);
+    if (idx !== -1) {
+        strokeHistory.splice(idx, 1);
+    }
+    redrawBoard();
+});
+
 // 2. Notatki (Notes)
 onChildAdded(ref(db, 'notes'), (snapshot) => {
     const note = snapshot.val();
